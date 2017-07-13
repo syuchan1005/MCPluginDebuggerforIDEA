@@ -10,18 +10,26 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Objects;
 import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.text.DefaultCaret;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -63,12 +71,10 @@ public class DebugToolWindowFactory implements ToolWindowFactory {
 		this.config = PluginDataConfig.getInstance(project);
 		if (this.config != null) this.config.init(project);
 		processManager = new ServerProcessManager(this.config, line -> {
-			outTextArea.append(line + "\n");
-			SwingUtilities.invokeLater(() -> {
-				JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
-				scrollBar.setValue(scrollBar.getMaximum());
-			});
+			if (line.equals("STX")) outTextArea.setText("");
+			else outTextArea.append(line + "\n");
 		});
+		((DefaultCaret) outTextArea.getCaret()).setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 		Content content = ContentFactory.SERVICE.getInstance().createContent(mainPanel, "", false);
 		toolWindow.getContentManager().addContent(content);
 		setValues();
@@ -180,4 +186,5 @@ public class DebugToolWindowFactory implements ToolWindowFactory {
 			}
 		});
 	}
+
 }

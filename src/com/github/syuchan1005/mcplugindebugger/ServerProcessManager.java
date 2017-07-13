@@ -13,8 +13,6 @@ import java.util.function.Consumer;
  */
 public class ServerProcessManager {
 	private PluginDataConfig config;
-	private boolean isRunning = false;
-	private Thread runningWatchThread;
 	private Consumer<String> consumer;
 	private Thread watchConsole;
 	private Process process;
@@ -23,48 +21,32 @@ public class ServerProcessManager {
 		this.config = config;
 		this.consumer = consumer;
 	}
+	
+	private boolean isRunning() {
+		return process != null && process.isAlive();
+	}
 
 	public void startServer() throws IOException {
-		if (!isRunning) {
+		if (!isRunning()) {
 			ProcessBuilder processBuilder = new ProcessBuilder("java", "-jar", config.getServerJarFile().getName());
 			processBuilder.directory(config.getServerJarFile().getParentFile());
 			processBuilder.redirectErrorStream(true);
 			process = processBuilder.start();
-			if (runningWatchThread == null) {
-				runningWatchThread = new Thread(() -> {
-					while (true) {
-						if (process != null) {
-							isRunning = process.isAlive();
-							if (!isRunning) process = null;
-						} else {
-							isRunning = false;
-						}
-					}
-                });
-				runningWatchThread.start();
-			}
-			if (watchConsole == null) {
-				watchConsole = new Thread(() -> {
-					while (true) {
+			if (watchConsole != null) watchConsole.interrupt();
+			watchConsole = new Thread(() -> {
+				this.consumer.accept("STX");
+				try (InputStreamReader reader = new InputStreamReader(process.getInputStream());
+					 BufferedReader bufferedReader = new BufferedReader(reader)) {
+					while (isRunning() && !Thread.interrupted()) {
 						try {
-							Thread.sleep(100);
-						} catch (InterruptedException ignore) {}
-						if (isRunning && process != null) {
-							try (InputStreamReader reader = new InputStreamReader(process.getInputStream());
-								 BufferedReader bufferedReader = new BufferedReader(reader)) {
-								while (isRunning) {
-									try {
-										String line = bufferedReader.readLine();
-										if (line == null) continue;
-										this.consumer.accept(line);
-									} catch (Exception ignore) {}
-								}
-							} catch (Exception ignore) {}
-						}
+							String line = bufferedReader.readLine();
+							if (line == null) continue;
+							this.consumer.accept(line);
+						} catch (Exception ignored) {}
 					}
-				});
-				watchConsole.start();
-			}
+				} catch (Exception ignored) {}
+			});
+			watchConsole.start();
 		}
 	}
 
@@ -82,7 +64,7 @@ public class ServerProcessManager {
 	}
 
 	public void forceStop() throws IOException {
-		if (isRunning) {
+		if (isRunning()) {
 			process.getErrorStream().close();
 			process.getInputStream().close();
 			process.getOutputStream().close();
@@ -91,7 +73,7 @@ public class ServerProcessManager {
 	}
 
 	public void writeCommand(String cmd) throws IOException {
-		if (isRunning) {
+		if (isRunning()) {
 			OutputStream outputStream = process.getOutputStream();
 			outputStream.write(cmd.getBytes(StandardCharsets.UTF_8));
 			outputStream.flush();
