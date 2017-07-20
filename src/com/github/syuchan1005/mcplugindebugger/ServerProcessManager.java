@@ -22,7 +22,7 @@ public class ServerProcessManager {
 		this.consumer = consumer;
 	}
 	
-	private boolean isRunning() {
+	public boolean isRunning() {
 		return process != null && process.isAlive();
 	}
 

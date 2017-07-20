@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>com.github.syuchan1005.MCPluginDebugger</id>
   <name>MCPluginDebugger</name>
-  <version>1.1</version>
+  <version>1.2</version>
   <vendor url="https://twitter.com/syu_chan_1005" email="syuchan.dev@gmail.com">syuchan1005</vendor>
 
   <description><![CDATA[
@@ -10,6 +10,8 @@
     ]]></description>
 
   <change-notes><![CDATA[
+      1.2:
+           Add Icons.
       1.1:
            thread optimization.
            button text fix.
@@ -22,6 +24,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.github.syuchan1005.mcplugindebugger.PluginDataConfig" serviceImplementation="com.github.syuchan1005.mcplugindebugger.PluginDataConfig"/>
-    <toolWindow id="MCDebugConsole" anchor="left" secondary="true" factoryClass="com.github.syuchan1005.mcplugindebugger.DebugToolWindowFactory" />
+    <toolWindow id="MCDebugConsole" anchor="left" secondary="true" factoryClass="com.github.syuchan1005.mcplugindebugger.DebugToolWindowFactory" icon="/icons/mcPluginDebugger.png"/>
   </extensions>
 </idea-plugin>
